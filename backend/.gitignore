@@ -1,0 +1,11 @@
+# Editors
+.idea/
+.vscode/
+
+# Build Artifacts
+node_modules/
+build/
+
+# Temp Directories
+tmp/
+temp/
