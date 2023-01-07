@@ -1,17 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm'
 
 @Entity()
 export class Account {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+    id: number
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+    createdAt: Date
 
-    @Column()
-    name: string;
+  @Column()
+    name: string
 
-    @ManyToOne(_type => Account)
-    @JoinColumn()
-    parent?: Account;
+  @ManyToOne(_type => Account)
+  @JoinColumn()
+    parent?: Account
 }

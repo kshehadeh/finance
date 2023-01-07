@@ -1,3 +1,5 @@
+const path = require('path')
+
 module.exports = {
   env: {
     browser: true,
@@ -7,6 +9,7 @@ module.exports = {
   overrides: [
   ],
   parserOptions: {
+    project: path.dirname(__filename) + '/tsconfig.json',
     ecmaVersion: 'latest',
     sourceType: 'module'
   },

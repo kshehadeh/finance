@@ -1,7 +1,7 @@
-import Controller from "@src/controllers"
+import Controller from '@src/controllers'
 
-class AccountController extends Controller {
-    initialize(): void {
-
-    }
+export class AccountController extends Controller {
+  initialize (): void {
+    throw new Error('unimplementd')
+  }
 }
