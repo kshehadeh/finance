@@ -11,5 +11,5 @@ export class Account {
     name: string;
 
     @ManyToOne(_type => Account)
-    parent: Account;
+    parent?: Account;
 }
