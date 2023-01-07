@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm"
 
 @Entity()
 export class Account {
@@ -8,8 +8,10 @@ export class Account {
     @CreateDateColumn()
     createdAt: Date;
 
+    @Column()
     name: string;
 
     @ManyToOne(_type => Account)
+    @JoinColumn()
     parent?: Account;
 }
