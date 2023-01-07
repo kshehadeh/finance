@@ -1,20 +1,28 @@
 import * as express from "express"
 import { Request, Response } from "express"
-import { Posting, User } from "./entity"
+import { Account, Posting } from "./entity"
 import { AppDataSource } from "./data-source"
 
 // establish database connection
 
 AppDataSource.initialize().then(async () => {
 
+    console.log("Creating root account");
+    let rootAccount = new Account();
+    rootAccount.name = "root";
+    rootAccount.parent = null;
+    rootAccount = await AppDataSource.manager.save(rootAccount);
+    console.log(rootAccount);
+
     console.log("Inserting a new posting into the database...");
     const posting = new Posting();
     posting.amount = "10000.000000";
+    posting.account = rootAccount;
     await AppDataSource.manager.save(posting);
     console.log("Saved a new posting with id: " + posting.id);
 
     console.log("Loading posting from the database...");
-    const loadedPosting = await AppDataSource.manager.find(Posting);
+    const loadedPosting = await AppDataSource.manager.find(Posting, { relations: { account: true } });
     console.log("Loaded posting: ", loadedPosting)
 
 
@@ -24,13 +32,16 @@ AppDataSource.initialize().then(async () => {
 
     // register routes
     app.get("/postings", async function (req: Request, res: Response) {
-        const postings = await AppDataSource.getRepository(Posting).find()
+        const postings = await AppDataSource.getRepository(Posting).find({ relations: { account: true } })
         res.json(postings)
     })
 
     app.get("/postings/:id", async function (req: Request, res: Response) {
-        const results = await AppDataSource.getRepository(Posting).findOneBy({
-            id: Number.parseInt(req.params.id, 10),
+        const results = await AppDataSource.getRepository(Posting).findOne({
+            where: {
+                id: Number.parseInt(req.params.id, 10),
+            },
+            relations: { account: true }
         })
         return res.send(results)
     })
