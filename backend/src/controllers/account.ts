@@ -1,5 +1,7 @@
-import Controller from "."
+import Controller from "@src/controllers"
 
 class AccountController extends Controller {
+    initialize(): void {
 
+    }
 }
