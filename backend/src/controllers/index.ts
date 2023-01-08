@@ -1,4 +1,3 @@
-
 /**
  * The base controller should be used as the parent class for any of the controller
  * classes.  Controllers are meant to be used as the repository for any business logic
@@ -6,7 +5,7 @@
  * data store - doing transformations, applying rules, aggregating data, etc.
  */
 abstract class Controller {
-  abstract initialize (): void
+  abstract initialize(): void;
 }
 
-export default Controller
+export default Controller;

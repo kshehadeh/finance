@@ -1,20 +1,21 @@
 {
-    "compilerOptions": {
-        "lib": [
-            "es5",
-            "es6"
-        ],
-        "baseUrl": ".",
-        "paths": {
-            "@src/*": ["src/*"],
-        },
-        "target": "es5",
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "outDir": "./build",
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": true,
-        "strictNullChecks": true
-    }
+  "compilerOptions": {
+    "lib": ["es5", "es6"],
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["src/*"]
+    },
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./build",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "allowUnreachableCode": true,
+    "allowUnusedLabels": true,
+    "noFallthroughCasesInSwitch": false,
+    "noUnusedLocals": false
+  }
 }

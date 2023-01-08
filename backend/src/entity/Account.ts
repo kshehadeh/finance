@@ -1,17 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Tree } from 'typeorm';
 
 @Entity()
+@Tree('nested-set')
 export class Account {
   @PrimaryGeneratedColumn()
-    id: number
+  id: number;
 
   @CreateDateColumn()
-    createdAt: Date
+  createdAt: Date;
 
   @Column()
-    name: string
+  name: string;
 
-  @ManyToOne(_type => Account)
+  @ManyToOne((_type) => Account)
   @JoinColumn()
-    parent?: Account
+  parent?: Account;
 }

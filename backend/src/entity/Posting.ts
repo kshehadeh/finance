@@ -1,18 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm'
-import { Account } from './Account'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Account } from './Account';
 
 @Entity()
 export class Posting {
   @PrimaryGeneratedColumn()
-    id: number
+  id: number;
 
   @CreateDateColumn()
-    createdAt: Date
+  createdAt: Date;
 
   @Column({ type: 'decimal', precision: 24, scale: 8, nullable: false })
-    amount: string
+  amount: string;
 
-  @ManyToOne(_type => Account)
+  @ManyToOne((_type) => Account)
   @JoinColumn()
-    account: Account
+  account: Account;
 }
