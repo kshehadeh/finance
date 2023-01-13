@@ -2,6 +2,9 @@ import * as express from 'express';
 import { Request, Response } from 'express';
 import { Account, Posting } from './entity';
 import { AppDataSource } from './data-source';
+import pinoHttp from 'pino-http';
+import rootLogger from './root-logger';
+
 // establish database connection
 
 AppDataSource.initialize()
@@ -26,9 +29,15 @@ AppDataSource.initialize()
     // create and setup express app
     const app = express();
     app.use(express.json());
+    app.use(
+      pinoHttp({
+        logger: rootLogger.child({ module: 'api' }),
+      }),
+    );
 
     // register routes
     app.get('/postings', (req: Request, res: Response) => {
+      req.log.info('GET /postings');
       AppDataSource.getRepository(Posting)
         .find({ relations: { account: true } })
         .then((posting) => res.json(posting))
@@ -36,11 +45,11 @@ AppDataSource.initialize()
     });
 
     app.get('/postings/:id', (req: Request, res: Response) => {
+      const id = Number.parseInt(req.params.id, 10);
+      req.log.info('GET /postings/%d', id);
       AppDataSource.getRepository(Posting)
         .findOne({
-          where: {
-            id: Number.parseInt(req.params.id, 10),
-          },
+          where: { id },
           relations: { account: true },
         })
         .then((posting) => res.json(posting))
@@ -49,6 +58,7 @@ AppDataSource.initialize()
 
     app.post('/postings', (req: Request, res: Response) => {
       const postings = AppDataSource.getRepository(Posting).create(req.body);
+      req.log.info({ postings }, 'POST /postings/');
       AppDataSource.getRepository(Posting)
         .save(postings)
         .then((posting) => res.json(posting))
@@ -56,8 +66,11 @@ AppDataSource.initialize()
     });
 
     app.delete('/postings/:id', (req: Request, res: Response) => {
+      const id = Number.parseInt(req.params.id);
+
+      req.log.info('DELETE /postings/%d', id);
       AppDataSource.getRepository(Posting)
-        .delete(Number.parseInt(req.params.id))
+        .delete(id)
         .then((posting) => res.json(posting))
         .catch((e) => res.end(e));
     });
