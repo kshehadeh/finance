@@ -1,6 +1,6 @@
-import { Request } from "express";
-import { AppDataSource } from "@src/data-source";
-import { DataSource } from "typeorm/data-source";
+import { Request } from 'express';
+import { AppDataSource } from '@src/data-source';
+import { DataSource } from 'typeorm/data-source';
 
 /**
  * The base controller should be used as the parent class for any of the controller
@@ -10,21 +10,20 @@ import { DataSource } from "typeorm/data-source";
  */
 abstract class Controller {
   private _req: Request;
-  private _db: DataSource
-  
+  private _db: DataSource;
+
   constructor(req: Request) {
-    this._req = req
-    this._db = AppDataSource
+    this._req = req;
+    this._db = AppDataSource;
   }
 
   protected get request() {
-    return this._req
+    return this._req;
   }
 
   protected get db() {
-    return this._db
+    return this._db;
   }
-  
 }
 
 export default Controller;
