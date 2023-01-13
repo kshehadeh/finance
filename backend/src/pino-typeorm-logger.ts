@@ -1,6 +1,9 @@
 import { Logger, QueryRunner } from 'typeorm';
 import pino from 'pino';
 
+// Logger interface includes `any` type
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 /**
  * TypeORM Logging adapter that targets pino
  */
