@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Tree } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Tree, TreeParent, TreeChildren } from 'typeorm';
 
 /**
  * Accounts represent a beginning balance (currently zero, for simplicity's sake) and a series of increases or decreases associated with that balance (see: [[Posting]]).
@@ -33,7 +33,9 @@ export class Account {
   @Column()
   name: string;
 
-  @ManyToOne((_type) => Account)
-  @JoinColumn()
+  @TreeChildren()
+  children: Account;
+
+  @TreeParent()
   parent?: Account;
 }
