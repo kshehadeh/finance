@@ -20,6 +20,9 @@ export class Posting {
   @Column({ type: 'decimal', precision: 24, scale: 8, nullable: false })
   amount: string;
 
+  @Column()
+  currency: string;
+
   @ManyToOne((_type) => Account)
   @JoinColumn()
   account: Account;

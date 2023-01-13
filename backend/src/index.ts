@@ -14,6 +14,7 @@ AppDataSource.initialize()
     console.log('Inserting a new posting into the database...');
     const posting = new Posting();
     posting.amount = '10000.000000';
+    posting.currency = 'USD';
     posting.account = rootAccount;
     await AppDataSource.manager.save(posting);
     console.log(`Saved a new posting with id: ${posting.id}`);
