@@ -12,7 +12,7 @@ export abstract class ExternalPosting {
   abstract getDescription(): string;
 }
 
-export abstract class FinanceDataSource {
+export abstract class ExternalDataSource {
   abstract getAccounts(): ExternalAccount[];
   abstract getPostings(): ExternalPosting[];
 }
