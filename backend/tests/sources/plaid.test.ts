@@ -1,5 +1,7 @@
 import { PlaidDataSource } from '../../src/sources/plaid';
 import { Configuration, PlaidEnvironments } from 'plaid';
+import { config } from 'dotenv';
+config();
 
 const plaid = new PlaidDataSource(
   new Configuration({

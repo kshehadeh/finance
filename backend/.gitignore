@@ -9,3 +9,5 @@ build/
 # Temp Directories
 tmp/
 temp/
+
+.env
