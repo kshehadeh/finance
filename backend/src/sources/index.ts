@@ -1,5 +1,6 @@
 export abstract class ExternalAccount {
   abstract getAccountId(): string;
+  abstract getAccountName(): string;
 }
 
 export abstract class ExternalPosting {
@@ -16,6 +17,6 @@ export abstract class ExternalPosting {
 }
 
 export abstract class ExternalDataSource {
-  abstract getAccounts(): ExternalAccount[];
+  abstract getAccounts(): Promise<ExternalAccount[]>;
   abstract getPostings(start: Date, end: Date): Promise<ExternalPosting[]>;
 }

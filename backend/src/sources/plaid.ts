@@ -1,5 +1,5 @@
 import rootLogger from '../root-logger';
-import { PlaidApi, Configuration, Products, SandboxPublicTokenCreateRequest, Transaction } from 'plaid';
+import { PlaidApi, Configuration, Products, SandboxPublicTokenCreateRequest, Transaction, AccountBase } from 'plaid';
 import { ExternalAccount, ExternalDataSource, ExternalPosting } from '.';
 
 const LOG = rootLogger.child({ module: 'sources/plaid' });
@@ -9,6 +9,22 @@ function _isoDateString(date: Date): string {
   const mm = (date.getUTCMonth() + 1).toFixed(0).padStart(2, '0');
   const dd = date.getUTCDate().toFixed(0).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+}
+
+export class PlaidAccountAdapter implements ExternalAccount {
+  _inner: AccountBase;
+
+  constructor(plaidAccount: AccountBase) {
+    this._inner = plaidAccount;
+  }
+
+  getAccountId(): string {
+    return this._inner.account_id;
+  }
+
+  getAccountName(): string {
+    return this._inner.name;
+  }
 }
 
 export class PlaidTransactionAdapter implements ExternalPosting {
@@ -51,9 +67,6 @@ export class PlaidDataSource implements ExternalDataSource {
   constructor(plaidConfig: Configuration) {
     this._plaidClient = new PlaidApi(plaidConfig);
   }
-  getAccounts(): ExternalAccount[] {
-    throw new Error('Method not implemented.');
-  }
 
   async _getAccessToken(publicToken: string): Promise<void> {
     const exchangeReq = {
@@ -76,6 +89,19 @@ export class PlaidDataSource implements ExternalDataSource {
     const publicTokenResp = await this._plaidClient.sandboxPublicTokenCreate(publicTokenReq);
     LOG.debug({ resp: publicTokenResp.data }, 'create sandbox public token response'); // FIXME: bad idea to log tokens?
     await this._getAccessToken(publicTokenResp.data.public_token);
+  }
+
+  async getAccounts(): Promise<ExternalAccount[]> {
+    if (this._accessToken == undefined) {
+      throw new Error('missing access token');
+    }
+
+    LOG.debug('fetching accounts');
+    const response = await this._plaidClient.accountsGet({
+      access_token: this._accessToken,
+    });
+
+    return response.data.accounts.map((a) => new PlaidAccountAdapter(a));
   }
 
   async getPostings(start: Date, end: Date): Promise<ExternalPosting[]> {
