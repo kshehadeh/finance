@@ -60,6 +60,76 @@ export class PlaidTransactionAdapter implements ExternalPosting {
   }
 }
 
+/**
+ * Cached information about a plaid *Item*.
+ *
+ * *Item*s are plaid's term for a user's login to a financial institution.
+ */
+type CachedPlaidItem = {
+  institutionId: string;
+
+  // TODO: this should include a userId (plaid and our own) once we handle multiple user
+
+  /**
+   * Long-term API key used to access the login
+   */
+  accessToken: string;
+};
+
+export class PlaidCache {
+  _plaidClient: PlaidApi;
+
+  /* Map of ItemIDs to cached info about the item */
+  _items: Map<string, CachedPlaidItem>;
+
+  constructor(client: PlaidApi) {
+    this._plaidClient = client;
+    this._items = new Map();
+  }
+
+  cachedItemIds(): string[] {
+    return Array.from(this._items.keys());
+  }
+
+  async removeItem(itemId: string) {
+    LOG.trace({ itemId }, 'PlaidCache.removeItem');
+    const item = this._items.get(itemId);
+    if (item == null) {
+      LOG.warn({ itemId }, 'tried to remove item ID not in cache');
+      return;
+    }
+
+    const _itemRemoveResponse = await this._plaidClient.itemRemove({
+      access_token: item.accessToken,
+    });
+    this._items.delete(itemId);
+  }
+
+  /** Add an item from a public token, if an access token is already cached for the linked item this function invalidates it.
+   *
+   */
+  async addItem(publicToken: string, institutionId: string) {
+    LOG.trace({ publicToken }, 'PlaidCache.addItemFromPublicToken');
+
+    const exchangeResponse = await this._plaidClient.itemPublicTokenExchange({ public_token: publicToken });
+
+    this._items.set(exchangeResponse.data.item_id, {
+      accessToken: exchangeResponse.data.access_token,
+      institutionId,
+    });
+  }
+
+  async addSandboxItem(institutionId: string, products: Products[]) {
+    LOG.trace({ institutionId, products }, 'PlaidCache.addSandboxItem');
+
+    const response = await this._plaidClient.sandboxPublicTokenCreate({
+      institution_id: institutionId,
+      initial_products: products,
+    });
+    await this.addItem(response.data.public_token, institutionId);
+  }
+}
+
 export class PlaidDataSource implements ExternalDataSource {
   _plaidClient: PlaidApi;
   _accessToken?: string;
