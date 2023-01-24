@@ -17,5 +17,7 @@ const plaid = new PlaidDataSource(
 
 beforeEach(async () => plaid.initSandbox());
 test('hello plaid', async () => {
-  expect((await plaid._getTransactions())[0].name).toBe('United Airlines');
+  expect((await plaid.getPostings(new Date(2022, 0, 1), new Date(2022, 0, 14)))[0].getDescription()).toBe(
+    'AUTOMATIC PAYMENT - THANK',
+  );
 }, 10000000);

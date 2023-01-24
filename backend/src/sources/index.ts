@@ -6,7 +6,7 @@ export abstract class ExternalPosting {
   abstract accountModifiedId(): string;
   abstract getAmount(): string; /* using string type for decimal number for now */
 
-  abstract getDatePosted(): Date;
+  abstract getDatePosted(): Date | null;
 
   /** The date the transaction was cleared with the institution, null means the posting is still pending.
    */
@@ -17,5 +17,5 @@ export abstract class ExternalPosting {
 
 export abstract class ExternalDataSource {
   abstract getAccounts(): ExternalAccount[];
-  abstract getPostings(): ExternalPosting[];
+  abstract getPostings(start: Date, end: Date): Promise<ExternalPosting[]>;
 }

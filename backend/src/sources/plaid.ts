@@ -1,8 +1,48 @@
 import rootLogger from '../root-logger';
-import { PlaidApi, Configuration, Products, SandboxPublicTokenCreateRequest } from 'plaid';
+import { PlaidApi, Configuration, Products, SandboxPublicTokenCreateRequest, Transaction } from 'plaid';
 import { ExternalAccount, ExternalDataSource, ExternalPosting } from '.';
 
 const LOG = rootLogger.child({ module: 'sources/plaid' });
+
+function _isoDateString(date: Date): string {
+  const yyyy = date.getUTCFullYear().toFixed(0).padStart(4, '0');
+  const mm = (date.getUTCMonth() + 1).toFixed(0).padStart(2, '0');
+  const dd = date.getUTCDate().toFixed(0).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export class PlaidTransactionAdapter implements ExternalPosting {
+  _inner: Transaction;
+
+  constructor(plaidTransaction: Transaction) {
+    this._inner = plaidTransaction;
+  }
+
+  accountModifiedId(): string {
+    return this._inner.account_id;
+  }
+
+  getAmount(): string {
+    return this._inner.amount.toFixed();
+  }
+
+  getDatePosted(): Date | null {
+    const datetimeStr = this._inner.authorized_datetime || this._inner.authorized_date;
+    if (datetimeStr) {
+      return new Date(datetimeStr);
+    }
+
+    return null;
+  }
+
+  getDateCleared(): Date {
+    return new Date(this._inner.datetime || this._inner.date);
+  }
+
+  getDescription(): string {
+    return this._inner.name;
+  }
+}
 
 export class PlaidDataSource implements ExternalDataSource {
   _plaidClient: PlaidApi;
@@ -12,9 +52,6 @@ export class PlaidDataSource implements ExternalDataSource {
     this._plaidClient = new PlaidApi(plaidConfig);
   }
   getAccounts(): ExternalAccount[] {
-    throw new Error('Method not implemented.');
-  }
-  getPostings(): ExternalPosting[] {
     throw new Error('Method not implemented.');
   }
 
@@ -41,19 +78,23 @@ export class PlaidDataSource implements ExternalDataSource {
     await this._getAccessToken(publicTokenResp.data.public_token);
   }
 
-  async _getTransactions() {
+  async getPostings(start: Date, end: Date): Promise<ExternalPosting[]> {
     if (this._accessToken == undefined) {
       throw new Error('missing access token');
     }
 
+    // make sure transaction data is ready
+    // FIXME: instead we should wait for the webhook INITIAL_UPDATE, or switch to the sync API
     await this._plaidClient.transactionsRefresh({ access_token: this._accessToken });
+    LOG.debug({ start, end }, 'fetchings transactions');
     const response = await this._plaidClient.transactionsGet({
       access_token: this._accessToken,
-      start_date: '2021-06-01',
-      end_date: '2021-12-30',
+      start_date: _isoDateString(start),
+      end_date: _isoDateString(end),
+      // TODO iterate to get all transactions.
       options: { count: 100 },
     });
 
-    return response.data.transactions;
+    return response.data.transactions.map((txn) => new PlaidTransactionAdapter(txn));
   }
 }
