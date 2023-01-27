@@ -41,9 +41,9 @@ test('PlaidCache add/remove item', async () => {
 
   const plaid = new PlaidCache(new PlaidApi(plaidConfig));
   await plaid.addSandboxItem('ins_109511', [Products.Transactions]);
-  expect(plaid._items.size).toBe(1);
+  expect(plaid.cachedItemIds().length).toBe(1);
   await plaid.removeItem(plaid.cachedItemIds()[0]);
-  expect(plaid._items.size).toBe(0);
+  expect(plaid.cachedItemIds().length).toBe(0);
 }, 10000000);
 
 test('PlaidCache sync transactions', async () => {
@@ -59,7 +59,7 @@ test('PlaidCache sync transactions', async () => {
 
   const plaid = new PlaidCache(new PlaidApi(plaidConfig));
   await plaid.addSandboxItem('ins_109511', [Products.Transactions]);
-  expect(plaid._items.size).toBe(1);
+  expect(plaid.cachedItemIds().length).toBe(1);
   const itemId = plaid.cachedItemIds()[0];
 
   await plaid.transactionRefresh(itemId);
@@ -68,5 +68,5 @@ test('PlaidCache sync transactions', async () => {
   expect(txns.length).toBe(100);
 
   await plaid.removeItem(itemId);
-  expect(plaid._items.size).toBe(0);
+  expect(plaid.cachedItemIds().length).toBe(0);
 }, 10000000);

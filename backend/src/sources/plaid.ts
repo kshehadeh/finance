@@ -87,38 +87,37 @@ export class PlaidCache {
   _plaidClient: PlaidApi;
 
   /* Map of ItemIDs to cached info about the item */
-  _items: Map<string, CachedPlaidItem>;
+  _items: { [key: string]: CachedPlaidItem };
 
   constructor(client: PlaidApi) {
     this._plaidClient = client;
-    this._items = new Map();
+    this._items = {};
   }
 
   cachedItemIds(): string[] {
-    return Array.from(this._items.keys());
+    return Object.keys(this._items);
   }
 
-  cachedTransactions(itemId: string): Transaction[] {
-    const item = this._items.get(itemId);
-    if (item == null) {
+  getItem(itemId: string): CachedPlaidItem {
+    if (!(itemId in this._items)) {
       throw new Error(`no such item ${itemId}`);
     }
 
-    return Object.values(item.transactions);
+    return this._items[itemId];
+  }
+
+  cachedTransactions(itemId: string): Transaction[] {
+    return Object.values(this.getItem(itemId).transactions);
   }
 
   async removeItem(itemId: string) {
     LOG.trace({ itemId }, 'PlaidCache.removeItem');
-    const item = this._items.get(itemId);
-    if (item == null) {
-      LOG.warn({ itemId }, 'tried to remove item ID not in cache');
-      return;
-    }
-
+    const item = this.getItem(itemId);
     const _itemRemoveResponse = await this._plaidClient.itemRemove({
       access_token: item.accessToken,
     });
-    this._items.delete(itemId);
+
+    delete this._items[itemId];
   }
 
   /** Add an item from a public token, if an access token is already cached for the linked item this function invalidates it.
@@ -129,32 +128,25 @@ export class PlaidCache {
 
     const exchangeResponse = await this._plaidClient.itemPublicTokenExchange({ public_token: publicToken });
 
-    this._items.set(exchangeResponse.data.item_id, {
+    this._items[exchangeResponse.data.item_id] = {
       accessToken: exchangeResponse.data.access_token,
       institutionId,
       transactions: {},
-    });
+    };
   }
 
   /** Force plaid to get new transactions from an item. Prefer listening for a webhook over this method */
   async transactionRefresh(itemId: string): Promise<void> {
     LOG.trace({ itemId }, 'PlaidCache.transactionRefresh');
 
-    const item = this._items.get(itemId);
-    if (item == null) {
-      throw new Error(`no such item ${itemId}`);
-    }
-
+    const item = this.getItem(itemId);
     await this._plaidClient.transactionsRefresh({ access_token: item.accessToken });
   }
 
   async syncTransactions(itemId: string, count = 100): Promise<boolean> {
     LOG.trace({ itemId, count }, 'PlaidCache.syncTransactions');
 
-    const item = this._items.get(itemId);
-    if (item == null) {
-      throw new Error(`no such item ${itemId}`);
-    }
+    const item = this.getItem(itemId);
 
     const syncResponse = await this._plaidClient.transactionsSync({
       access_token: item.accessToken,
