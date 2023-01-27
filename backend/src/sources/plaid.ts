@@ -1,6 +1,7 @@
 import rootLogger from '../root-logger';
 import { PlaidApi, Configuration, Products, SandboxPublicTokenCreateRequest, Transaction, AccountBase } from 'plaid';
 import { ExternalAccount, ExternalDataSource, ExternalPosting } from '.';
+import { ReadStream, WriteStream } from 'fs';
 
 const LOG = rootLogger.child({ module: 'sources/plaid' });
 
@@ -192,6 +193,22 @@ export class PlaidCache {
       initial_products: products,
     });
     await this.addItem(response.data.public_token, institutionId);
+  }
+
+  serialize(): string {
+    return JSON.stringify(this._items);
+  }
+
+  async write(out: WriteStream): Promise<void> {
+    return new Promise((resolve, reject) => out.write(this.serialize(), (err) => (err ? reject(err) : resolve())));
+  }
+
+  load(data: ReadStream | string) {
+    if (data instanceof ReadStream) {
+      this._items = JSON.parse(data.read());
+    } else {
+      this._items = JSON.parse(data);
+    }
   }
 }
 
