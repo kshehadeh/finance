@@ -60,6 +60,10 @@ export class PlaidTransactionAdapter implements ExternalPosting {
   }
 }
 
+type TransactionCache = {
+  [key: string]: Transaction;
+};
+
 /**
  * Cached information about a plaid *Item*.
  *
@@ -74,6 +78,9 @@ type CachedPlaidItem = {
    * Long-term API key used to access the login
    */
   accessToken: string;
+
+  transactions: TransactionCache;
+  transactionSyncCursor?: string;
 };
 
 export class PlaidCache {
@@ -89,6 +96,15 @@ export class PlaidCache {
 
   cachedItemIds(): string[] {
     return Array.from(this._items.keys());
+  }
+
+  cachedTransactions(itemId: string): Transaction[] {
+    const item = this._items.get(itemId);
+    if (item == null) {
+      throw new Error(`no such item ${itemId}`);
+    }
+
+    return Object.values(item.transactions);
   }
 
   async removeItem(itemId: string) {
@@ -116,7 +132,64 @@ export class PlaidCache {
     this._items.set(exchangeResponse.data.item_id, {
       accessToken: exchangeResponse.data.access_token,
       institutionId,
+      transactions: {},
     });
+  }
+
+  /** Force plaid to get new transactions from an item. Prefer listening for a webhook over this method */
+  async transactionRefresh(itemId: string): Promise<void> {
+    LOG.trace({ itemId }, 'PlaidCache.transactionRefresh');
+
+    const item = this._items.get(itemId);
+    if (item == null) {
+      throw new Error(`no such item ${itemId}`);
+    }
+
+    await this._plaidClient.transactionsRefresh({ access_token: item.accessToken });
+  }
+
+  async syncTransactions(itemId: string, count = 100): Promise<boolean> {
+    LOG.trace({ itemId, count }, 'PlaidCache.syncTransactions');
+
+    const item = this._items.get(itemId);
+    if (item == null) {
+      throw new Error(`no such item ${itemId}`);
+    }
+
+    const syncResponse = await this._plaidClient.transactionsSync({
+      access_token: item.accessToken,
+      count,
+      cursor: item.transactionSyncCursor,
+    });
+    for (const modified of syncResponse.data.modified) {
+      LOG.debug({ itemId, transactionId: modified.transaction_id }, 'updating cached transaction from sync');
+      item.transactions[modified.transaction_id] = modified;
+    }
+
+    for (const added of syncResponse.data.added) {
+      LOG.debug({ itemId, transactionId: added.transaction_id }, 'adding new transaction from sync');
+      if (added.transaction_id in item.transactions) {
+        LOG.warn(
+          { itemId, transactionId: added.transaction_id },
+          'added transaction from sync already exists in cache, overwriting',
+        );
+      }
+
+      item.transactions[added.transaction_id] = added;
+    }
+
+    for (const removed of syncResponse.data.removed) {
+      LOG.debug({ itemId, transactionId: removed.transaction_id }, 'removing transaction from sync');
+      if (removed.transaction_id == undefined) {
+        LOG.debug({ itemId }, 'removed transaction ID unset, skipping');
+        continue;
+      }
+
+      delete item.transactions[removed.transaction_id];
+    }
+
+    item.transactionSyncCursor = syncResponse.data.next_cursor;
+    return syncResponse.data.has_more;
   }
 
   async addSandboxItem(institutionId: string, products: Products[]) {
